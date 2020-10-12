@@ -1,0 +1,1248 @@
+swagger: "2.0"
+info:
+  description: "Commercial off the shelf management tool"
+  version: "0.0.1"
+  title: "EasyCots"
+  termsOfService: "http://localhost:8080/easyComponent/terms/"
+  contact:
+    email: "easyCots@lgm.fr"
+  license:
+    name: "LGM"
+    url: "http://localhost:8080/easyComponent/licenses/LICENSE.html"
+host: "com.laribi.easyComponent"
+basePath: "/"
+
+securityDefinitions:
+  easyComponent_auth:
+    type: "oauth2"
+    authorizationUrl: "http://localhost:8080/easyComponent/oauth/dialog"
+    flow: "implicit"
+    scopes:
+      create_Component: "create Component"
+      write_Component: "update Component - only for Admin"
+      read_Component: "read Component"
+      create_product: "create product"
+      write_product : "update product"
+      read_product : "read product"
+      create_licence : "create licence"
+      write_licence : "modify licence"
+      read_licence : "update licence"
+  api_key:
+    type: "apiKey"
+    name: "api_key"
+    in: "header"
+
+security:
+  - easyComponent_auth:
+      - create_Component
+      - write_Component
+      - read_Component
+      - create_product
+      - write_product
+      - read_product
+      - create_licence
+      - write_licence
+      - read_licence
+
+tags:
+  - name: "Auth"
+    description: "Authentication Operations"
+  - name: "Component"
+    description: "Operations about Component"
+  - name: "Product"
+    description: "Operations about Products"
+  - name: "Licence"
+    description: "Operations about Licences"
+  - name: "Message"
+    description: "Operations about Messages"
+  - name: "User"
+    description: "Operations about Users"
+
+schemes:
+  - "https"
+
+paths:
+  # Authentication endpoints
+  /auth/login:
+    post:
+      tags:
+        - "Auth"
+      summary: "Generates an OAuth2 Token"
+      description: "Returns a OAuth2 Token"
+      operationId: "login"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "credentials"
+          description: "The credentials"
+          required: true
+          schema:
+            $ref: "#/definitions/CredentialsViewModel"
+      responses:
+        '200':
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/TokenViewModel"
+        '401':
+          description: "User not authenticated"
+  # Models paths
+  /Component:
+    get:
+      tags:
+        - "Component"
+      summary: "Get the list of Component"
+      description: "Return the list of Component (including archived ones, etc...) with summary information depending on status criteria if exist"
+      operationId: "getComponent"
+      produces:
+        - "application/json"
+        - "application/xml"
+      parameters:
+        - name: "Component_status"
+          in: "header"
+          description: "Ce service renvoie la liste de Component sans lister tous les d�tails. Si le status du Component est d�clar� dans la requ�te, seuls les Component de ce status seront retourn�s"
+          required: false
+          type: "string"
+      responses:
+        '200':
+          description: "Successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ComponentAbstract"
+        '405':
+          description: "Invalid input"
+    post:
+      tags:
+        - "Component"
+      summary: "Add a new Component, for admin only"
+      description: "Ce service permet de   cr�er un nouveau Component"
+      operationId: "addComponent"
+      consumes:
+        - "application/json"
+        - "application/xml"
+      produces:
+        - "application/xml"
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "Component object that needs to be added"
+          required: true
+          schema:
+            $ref: "#/definitions/ComponentAbstract"
+      responses:
+        "200":
+          description: "successful operation"
+        "405":
+          description: "Invalid input"
+  /Component/{Component_id}:
+    get:
+      tags:
+        - "Component"
+      summary: "Get Component detail information"
+      description: "Returns a single Component with all attributes values"
+      operationId: "getComponentDetails"
+      produces:
+        - "application/json"
+        - "application/xml"
+      parameters:
+        - name: "Component_id"
+          in: "path"
+          description: "ID of Component to return"
+          required: true
+          type: "integer"
+          format: "int64"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/Component"
+        "400":
+          description: "Invalid ID supplied"
+        "404":
+          description: "Component not found"
+  /Component/{Component_id}/Version:
+    get:
+      tags:
+        - "Component"
+      summary: "Get the list of available versions of the Component"
+      description: "Returns a Component versions with all attributes values"
+      operationId: "getComponentDetailsVersion"
+      produces:
+        - "application/json"
+        - "application/xml"
+      parameters:
+        - name: "Component_id"
+          in: "path"
+          description: "ID of Component to return"
+          required: true
+          type: "integer"
+          format: "int64"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/Component"
+        "400":
+          description: "Invalid ID supplied"
+        "404":
+          description: "Component not found"
+    put:
+      tags:
+        - "Component"
+      summary: "Updates a Component for ComponentAdmin only"
+      description: "Create a new Component version"
+      operationId: "createComponentVersion"
+      produces:
+        - "application/xml"
+        - "application/json"
+      parameters:
+        - name: "Component_id"
+          in: "path"
+          description: "ID of Component to create"
+          required: true
+          type: "integer"
+          format: "int64"
+        - in: "body"
+          name: "body"
+          description: "Create a Component"
+          required: true
+          schema:
+            $ref: "#/definitions/ComponentVersion"
+      responses:
+        "200":
+          description: "successful operation"
+        "405":
+          description: "Invalid input"
+  /Component/{Component_id}/Version/{ComponentVersion} :
+    get:
+      tags:
+        - "Component"
+      summary: "Get Component detail information for a speciphic version"
+      description: "Returns a speciphic Component version with all attributes values"
+      operationId: "getComponentDetailsSpeciphicVersion"
+      produces:
+        - "application/json"
+        - "application/xml"
+      parameters:
+        - name: "Component_id"
+          in: "path"
+          description: "ID of Component to return"
+          required: true
+          type: "integer"
+          format: "int64"
+        - name: "ComponentVersion"
+          in: "path"
+          description: "Version of Component to return"
+          required: true
+          type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/Component"
+        "400":
+          description: "Invalid ID supplied"
+        "404":
+          description: "Component not found"
+    put:
+      tags:
+        - "Component"
+      summary: "Updates a Component version for ComponentAdmin only"
+      description: "Update attribute values of an existing Component version"
+      operationId: "updateComponent"
+      produces:
+        - "application/xml"
+        - "application/json"
+      parameters:
+        - name: "Component_id"
+          in: "path"
+          description: "ID of Component to return"
+          required: true
+          type: "integer"
+          format: "int64"
+        - name: "ComponentVersion"
+          in: "path"
+          description: "Version of Component to return"
+          required: true
+          type: "string"
+        - in: "body"
+          name: "body"
+          description: "Updated Component"
+          required: true
+          schema:
+            $ref: "#/definitions/ComponentVersion"
+      responses:
+        "200":
+          description: "successful operation"
+        "405":
+          description: "Invalid input"
+  /Component/{Component_id}/requestComponent:
+    post:
+      tags:
+        - "Component"
+      summary: "Request a Component creation by ComponentAdmin, for users only"
+      description: "Send attribute values of an missing Component"
+      operationId: "createMissingComponent"
+      produces:
+        - "application/xml"
+        - "application/json"
+      parameters:
+        - name: "Component_id"
+          in: "path"
+          description: "ID of Component to return"
+          required: true
+          type: "integer"
+          format: "int64"
+        - in: "body"
+          name: "body"
+          description: "Send message to create a missing Component"
+          required: true
+          schema:
+            $ref: "#/definitions/MessageModel"
+      responses:
+        "200":
+          description: "successful operation"
+        "405":
+          description: "Invalid input"
+  /product:
+    get:
+      tags:
+        - "Product"
+      summary: "Get the list of Product"
+      description: "Return the list of Product (including archived ones, etc...) with summary information"
+      operationId: "getProduct"
+      produces:
+        - "application/json"
+        - "application/xml"
+      parameters:
+        - name: "productStatus"
+          in: "header"
+          description: "Ce service renvoie la liste de Produits sans lister tous les d�tails. Si le status du Produit est d�clar� dans la requ�te, seuls les Produits de ce status seront retourn�s"
+          required: false
+          type: "string"
+      responses:
+        "200":
+          description: "Successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ProductAbstract"
+        "405":
+          description: "Invalid input"
+    post:
+      tags:
+        - "Product"
+      summary: "Add a new Product"
+      description: "Ce service permet de cr�er une Product"
+      operationId: "addProduct"
+      consumes:
+        - "application/json"
+        - "application/xml"
+      produces:
+        - "application/xml"
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "Product object that needs to be added"
+          required: true
+          schema:
+            $ref: "#/definitions/ProductAbstract"
+      responses:
+        "200":
+          description: "Successful operation"
+        "405":
+          description: "Invalid input"
+  /product/{product_id}:
+    get:
+      tags:
+        - "Product"
+      summary: "Get Product detail information"
+      description: "Returns a single Product with all attributes values"
+      operationId: "getProductDetails"
+      produces:
+        - "application/json"
+        - "application/xml"
+      parameters:
+        - name: "product_id"
+          in: "path"
+          description: "ID of Product to return"
+          required: true
+          type: "integer"
+          format: "int64"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/Product"
+        "400":
+          description: "Invalid ID supplied"
+        "404":
+          description: "Product not found"
+    put:
+      tags:
+        - "Product"
+      summary: "Updates a Product"
+      description: "Update some attribute values of an existing Product"
+      operationId: "updateProduct"
+      produces:
+        - "application/xml"
+        - "application/json"
+      parameters:
+        - name: "product_id"
+          in: "path"
+          description: "ID of Product that needs to be updated"
+          required: true
+          type: "integer"
+          format: "int64"
+        - in: "body"
+          name: "body"
+          description: "Updated Product"
+          required: true
+          schema:
+            $ref: "#/definitions/Product"
+      responses:
+        "200":
+          description: "successful operation"
+        "405":
+          description: "Invalid input"
+  /product/{product_id}/Version:
+    get:
+      tags:
+        - "Product"
+      summary: "Get Product detail information by version"
+      description: "Returns a single Product version with all attributes values"
+      operationId: "getProductVersionDetails"
+      produces:
+        - "application/json"
+        - "application/xml"
+      parameters:
+        - name: "product_id"
+          in: "path"
+          description: "ID of Product to return"
+          required: true
+          type: "integer"
+          format: "int64"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/ProductVersion"
+        "400":
+          description: "Invalid parameters supplied"
+        "404":
+          description: "Product not found"
+  /product/{product_id}/Version/{productVersion}/Component:
+    get:
+      tags:
+        - "Product"
+      summary: "Get the list of Component for a Product version and his detailed information (NOT FROZEN)"
+      description: "Returns the list of Component for the current Product version with all attributes values"
+      operationId: "getComponentlistProductVersionDetails"
+      produces:
+        - "application/json"
+        - "application/xml"
+      parameters:
+        - name: "product_id"
+          in: "path"
+          description: "ID of Product to return"
+          required: true
+          type: "integer"
+          format: "int64"
+        - name: "productVersion"
+          in: "path"
+          description: "Version of Product to return"
+          required: true
+          type: "string"
+
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/ComponentUsed"
+        "400":
+          description: "Invalid parameters supplied"
+        "404":
+          description: "Product not found"
+  /licence:
+    get:
+      tags:
+        - "Licence"
+      summary: "Get the list of Licence"
+      description: "Return the list of Licence (including archived ones, etc...) with summary information"
+      operationId: "getLicence"
+      produces:
+        - "application/json"
+        - "application/xml"
+      parameters:
+        - name: "licenceStatus"
+          in: "header"
+          description: "Ce service renvoie la liste de Licences sans lister tous les d�tails."
+          required: false
+          type: "string"
+      responses:
+        '200':
+          description: "Successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/LicenceAbstract"
+        '405':
+          description: "Invalid input"
+    post:
+      tags:
+        - "Licence"
+      summary: "Add a new Licence"
+      description: "Ce service permet de cr�er une Licence"
+      operationId: "addLicence"
+      consumes:
+        - "application/json"
+        - "application/xml"
+      produces:
+        - "application/xml"
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "Licence object that needs to be added"
+          required: true
+          schema:
+            $ref: "#/definitions/LicenceAbstract"
+      responses:
+        "200":
+          description: "successful operation"
+        "405":
+          description: "Invalid input"
+  /licence/{licence_id}:
+    get:
+      tags:
+        - "Licence"
+      summary: "Get Licence detail information"
+      description: "Returns a single Licence with all attributes values"
+      operationId: "getLicenceDetails"
+      produces:
+        - "application/json"
+        - "application/xml"
+      parameters:
+        - name: "licence_id"
+          in: "path"
+          description: "ID of Licence to return"
+          required: true
+          type: "integer"
+          format: "int64"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/Licence"
+        "400":
+          description: "Invalid ID supplied"
+        "404":
+          description: "Licence not found"
+    put:
+      tags:
+        - "Licence"
+      summary: "Updates a Licence"
+      description: "Update some attribute values of an existing Licence"
+      operationId: "updateLicence"
+      produces:
+        - "application/xml"
+        - "application/json"
+      parameters:
+        - name: "licence_id"
+          in: "path"
+          description: "ID of Licence that needs to be updated"
+          required: true
+          type: "integer"
+          format: "int64"
+        - in: "body"
+          name: "body"
+          description: "Updated Licence"
+          required: true
+          schema:
+            $ref: "#/definitions/Licence"
+      responses:
+        "200":
+          description: "successful operation"
+        "405":
+          description: "Invalid input"
+  /message:
+    get:
+      tags:
+        - "Message"
+      summary: "Get the list of messages with status if exist"
+      description: "Return the list of messages"
+      operationId: "getMessage"
+      produces:
+        - "application/json"
+        - "application/xml"
+      parameters:
+        - name: "MessageStatus"
+          in: "header"
+          description: "Ce service renvoie la liste de Messages"
+          required: false
+          type: "string"
+      responses:
+        '200':
+          description: "Successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/MessageModel"
+        '405':
+          description: "Invalid input"
+    post:
+      tags:
+        - "Message"
+      summary: "Send a new Message by Admin to User"
+      description: "Ce service permet d'envoyer un message au ComponentAdmin"
+      operationId: "sendMessage"
+      consumes:
+        - "application/json"
+        - "application/xml"
+      produces:
+        - "application/xml"
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "Message object that needs to be send"
+          required: true
+          schema:
+            $ref: "#/definitions/MessageModel"
+      responses:
+        "200":
+          description: "successful operation"
+        "405":
+          description: "Invalid input"
+  /message/{message_id}:
+    get:
+      tags:
+        - "Message"
+      summary: "Get Message detail information"
+      description: "Returns a single Message with all attributes values"
+      operationId: "getMessageDetails"
+      produces:
+        - "application/json"
+        - "application/xml"
+      parameters:
+        - name: "message_id"
+          in: "path"
+          description: "ID of Message to return"
+          required: true
+          type: "integer"
+          format: "int64"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/MessageModel"
+        "400":
+          description: "Invalid ID supplied"
+        "404":
+          description: "Message not found"
+    put:
+      tags:
+        - "Message"
+      summary: "Update a Message"
+      description: "Update some attribute values of an existing Message"
+      operationId: "updateMessage"
+      produces:
+        - "application/xml"
+        - "application/json"
+      parameters:
+        - name: "message_id"
+          in: "path"
+          description: "ID of Message that needs to be updated"
+          required: true
+          type: "integer"
+          format: "int64"
+        - in: "body"
+          name: "body"
+          description: "Updated Message"
+          required: true
+          schema:
+            $ref: "#/definitions/MessageModel"
+      responses:
+        "200":
+          description: "successful operation"
+        "405":
+          description: "Invalid input"
+
+  /user:
+    get:
+      tags:
+        - "User"
+      summary: "Get the list of Users"
+      description: "Return the list of Users with summary information"
+      operationId: "getUser"
+      produces:
+        - "application/json"
+        - "application/xml"
+      parameters:
+        - name: "userStatus"
+          in: "header"
+          description: "Ce service renvoie la liste des utilisateurs sans lister tous les d�tails."
+          required: false
+          type: "string"
+      responses:
+        '200':
+          description: "Successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/User"
+        '405':
+          description: "Invalid input"
+    post:
+      tags:
+        - "User"
+      summary: "Create user"
+      description: "This can only be done by the logged in user."
+      operationId: "createUser"
+      produces:
+        - "application/xml"
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "Created user object"
+          required: true
+          schema:
+            $ref: "#/definitions/User"
+      responses:
+        default:
+          description: "successful operation"
+  /user/createWithArray:
+    post:
+      tags:
+        - "User"
+      summary: "Creates list of users with given input array"
+      description: ""
+      operationId: "createUsersWithArrayInput"
+      produces:
+        - "application/xml"
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "List of user object"
+          required: true
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/User"
+      responses:
+        default:
+          description: "successful operation"
+  /user/createWithList:
+    post:
+      tags:
+        - "User"
+      summary: "Creates list of users with given input array"
+      description: ""
+      operationId: "createUsersWithListInput"
+      produces:
+        - "application/xml"
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "List of user object"
+          required: true
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/User"
+      responses:
+        default:
+          description: "successful operation"
+  /user/login:
+    get:
+      tags:
+        - "User"
+      summary: "Logs user into the system"
+      description: ""
+      operationId: "loginUser"
+      produces:
+        - "application/xml"
+        - "application/json"
+      parameters:
+        - name: "username"
+          in: "query"
+          description: "The user name for login"
+          required: true
+          type: "string"
+        - name: "password"
+          in: "query"
+          description: "The password for login in clear text"
+          required: true
+          type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "string"
+          headers:
+            X-Rate-Limit:
+              type: "integer"
+              format: "int32"
+              description: "calls per hour allowed by the user"
+            X-Expires-After:
+              type: "string"
+              format: "date-time"
+              description: "date in UTC when token expires"
+        "400":
+          description: "Invalid username/password supplied"
+  /user/logout:
+    get:
+      tags:
+        - "User"
+      summary: "Logs out current logged in user session"
+      description: ""
+      operationId: "logoutUser"
+      produces:
+        - "application/xml"
+        - "application/json"
+      parameters: []
+      responses:
+        default:
+          description: "successful operation"
+  /user/{username}:
+    get:
+      tags:
+        - "User"
+      summary: "Get user by user name"
+      description: ""
+      operationId: "getUserByName"
+      produces:
+        - "application/json"
+        - "application/xml"
+      parameters:
+        - name: "username"
+          in: "path"
+          description: "The name that needs to be fetched. Use user1 for testing. "
+          required: true
+          type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/User"
+        "400":
+          description: "Invalid username supplied"
+        "404":
+          description: "User not found"
+    put:
+      tags:
+        - "User"
+      summary: "Updated user"
+      description: "This can only be done by the logged in user."
+      operationId: "updateUser"
+      produces:
+        - "application/xml"
+        - "application/json"
+      parameters:
+        - name: "username"
+          in: "path"
+          description: "name that need to be updated"
+          required: true
+          type: "string"
+        - in: "body"
+          name: "body"
+          description: "Updated user object"
+          required: true
+          schema:
+            $ref: "#/definitions/User"
+      responses:
+        "400":
+          description: "Invalid user supplied"
+        "404":
+          description: "User not found"
+  /User/requestUser:
+    post:
+      tags:
+        - "User"
+      summary: "Request a User creation by ComponentAdmin, for users only"
+      description: "Send attribute values of an missing User"
+      operationId: "createMissingUSer"
+      produces:
+        - "application/xml"
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "Send message to create a missing Component"
+          required: true
+          schema:
+            $ref: "#/definitions/User"
+      responses:
+        "200":
+          description: "successful operation"
+        "405":
+          description: "Invalid input"
+
+definitions:
+
+  User:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+      username:
+        type: "string"
+      firstName:
+        type: "string"
+      lastName:
+        type: "string"
+      email:
+        type: "string"
+      password:
+        type: "string"
+      phone:
+        type: "string"
+      UserStatus:
+        type: "array"
+        description: "User status"
+        items:
+          $ref: "#/definitions/UserStatus"
+
+  ComponentAbstract:
+    description: "Global information of the Component (no version)"
+    type: "object"
+    required:
+      - "Component_id"
+      - "Component_name"
+      - "Component_downloadUrl"
+    properties:
+      Component_id:
+        type: "integer"
+      Component_name:
+        type: "string"
+        example: "Maven"
+      Component_currentLicence:
+        $ref: "#/definitions/LicenceVersion"
+      Component_status:
+        type: "array"
+        description: "Component status"
+        items:
+          $ref: "#/definitions/ComponentStatus"
+      Component_downloadUrl:
+        example: "https://repository.apache.org/"
+        type: "string"
+      Component_editor:
+        type: "string"
+        description: "Name of editor"
+        example: "IBM"
+  Component:
+    description: "Global information of the Component (with version)"
+    type: "object"
+    required:
+      - "Component_id"
+      - "Component_name"
+      - "Component_downloadUrl"
+    properties:
+      Component_id:
+        type: "integer"
+      Component_name:
+        type: "string"
+        example: "Maven"
+      Component_lastVersionId:
+        type: "integer"
+      Component_currentLicence:
+        $ref: "#/definitions/LicenceVersion"
+      Component_status:
+        type: "array"
+        description: "Component status"
+        items:
+          $ref: "#/definitions/ComponentStatus"
+      Component_downloadUrl:
+        example: "https://repository.apache.org/"
+        type: "string"
+      Component_editor:
+        type: "string"
+        description: "Name of editor"
+        example: "IBM"
+
+  ComponentVersion:
+    description: "For specific version of a Component"
+    type: "object"
+    required:
+      - "ComponentVersion"
+      - "ComponentVersion_name"
+      - "ComponentVersion_downloadUrl"
+    properties:
+      ComponentVersionId:
+        type: "integer"
+      ComponentVersionName:
+        type: "string"
+        example: "V1.0.1"
+      ComponentVersion_downloadUrl:
+        example: "https://repository.apache.org/"
+        type: "string"
+      ComponentVersion_currentLicence:
+        $ref: "#/definitions/LicenceVersion"
+      ComponentVersion_status:
+        type: "array"
+        description: "Component status"
+        items:
+          $ref: "#/definitions/ComponentVersionStatus"
+
+  ComponentUsed:
+    description: "For the list of ComponentVersion used in a product version"
+    type: "object"
+    properties:
+      Component_id:
+        type: "integer"
+      Component_name:
+        type: "string"
+        example: "Maven"
+      ComponentVersionId:
+        type: "integer"
+      ComponentVersionName:
+        type: "string"
+        example: "V1.0.1"
+
+  ProductAbstract:
+    type: "object"
+    required:
+      - "product_id"
+      - "product_name"
+    properties:
+      product_id:
+        type: "integer"
+      product_name:
+        type: "string"
+        example: "Maven"
+      productStatus:
+        $ref: "#/definitions/ProductLifeCycleStatus"
+      product_Url:
+        description: "Url of the details of the product"
+        type: "string"
+        example: "./product/productId"
+
+  Product:
+    type: "object"
+    required:
+      - "product_id"
+      - "product_name"
+    properties:
+      product_id:
+        type: "integer"
+        format: "int11"
+      product_name:
+        type: "string"
+        example: "Maven"
+      projectLeader:
+        $ref: "#/definitions/User"
+      product_createdOn:
+        type: "string"
+        format: "date"
+      product_lastVersion:
+        type: "string"
+        example: "V1.0"
+      productStatus:
+        $ref: "#/definitions/ProductLifeCycleStatus"
+      product_lastRelease:
+        $ref: "#/definitions/ProductVersion"
+      product_workingVersion:
+        $ref: "#/definitions/ProductVersion"
+      product_currentLicence:
+        $ref: "#/definitions/LicenceVersion"
+      product_Url:
+        description: "Url of the details of the product"
+        type: "string"
+        example: "./product/$productId"
+
+  ProductVersion:
+    type: "object"
+    required:
+      - "ProductVersion_id"
+      - "ProductVersion_name"
+    properties:
+      productVersion_id:
+        type: "integer"
+      productVersion_name:
+        type: "string"
+        example: "V1.0.1"
+      productVersionStatus:
+        $ref: "#/definitions/ProductVersionStatus"
+      productVersion_author:
+        $ref: "#/definitions/User"
+      productVersion_createdOn:
+        type: "string"
+        format: "date"
+      frozen:
+        type: "boolean"
+        description: "Released or not"
+        example: "true"
+      frozenOn:
+        type: "string"
+        format: "date"
+
+  LicenceAbstract:
+    description: "Licence information including version information"
+    type: "object"
+    required:
+      - "licence_id"
+      - "licence_name"
+    properties:
+      licence_id:
+        type: "integer"
+        format: "int11"
+      licence_name:
+        type: "string"
+        example: "Maven"
+      licenceStatus:
+        type: "string"
+        description: "Licence status "
+        enum:
+          - "available"
+          - "pending"
+      licence_type :
+        example: "Commercial"
+        type: "string"
+      licence_documentUrl:
+        example: "\\\\srv\\folder\\file.doc"
+        type: "string"
+
+  Licence:
+    description: "Licence information including version information"
+    type: "object"
+    required:
+      - "licence_id"
+      - "licence_name"
+    properties:
+      licence_id:
+        type: "integer"
+        format: "int11"
+      licence_name:
+        type: "string"
+        example: "Maven"
+      licence_type :
+        example: "Commercial"
+        type: "string"
+      licence_documentUrl:
+        example: "\\\\srv\\folder\\file.doc"
+        type: "string"
+      LicenceVersion:
+        $ref: "#/definitions/LicenceVersion"
+
+  LicenceVersion:
+    type: "object"
+    required:
+      - "LicenceVersion_id"
+      - "LicenceVersion_name"
+    properties:
+      LicenceVersion_id:
+        type: "integer"
+      LicenceVersion_name:
+        type: "string"
+        example: "V1.0.1"
+
+  ComponentStatus:
+    type: "string"
+    description: "Component status "
+    enum:
+      - "Available"
+      - "No more maintained"
+      - "Under Politic Issue"
+      - "Under Derogation"
+
+  ComponentVersionStatus:
+    type: "string"
+    description: "Component status in the platform"
+    enum:
+      - "Up to date"
+      - "Osolete/Deprecated"
+      - "Vulnerable"
+      - "Under Derogation"
+
+  ProductLifeCycleStatus:
+    type: "string"
+    description: "Product lifecycle status"
+    enum:
+      - "1 - Developpement"
+      - "2 - Maintained"
+      - "3 - End of Maintenance"
+      - "4 - End of Support"
+      - "5 - End of Extended Support"
+      - "6 - End Of Life"
+
+  ProductVersionStatus:
+    type: "string"
+    description: "Product version status"
+    enum:
+      - "1 - In Developement"
+      - "2 - Up To Date"
+      - "3 - Out Of Date"
+      - "4 - Obsolete/Deprecated"
+      - "5 - No More Maintained"
+  UserStatus:
+    type: "string"
+    description: "User Status"
+    enum:
+      - "1 - Paramadmin"
+      - "2 - Componentadmin"
+      - "3 - User"
+  MessageStatus:
+    type: "string"
+    description: "Message status"
+    enum:
+      - "read"
+      - "unread"
+      - "answared"
+      - "accepted"
+      - "rejected"
+
+  CredentialsViewModel:
+    type: "object"
+    required:
+      - "username"
+      - "password"
+    properties:
+      username:
+        type: "string"
+        example: "Dupont"
+      password:
+        type: "string"
+        example: "****"
+    xml:
+      name: "CredentialsViewModel"
+  TokenViewModel:
+    type: "object"
+    properties:
+      token:
+        type: "string"
+    xml:
+      name: "TokenViewModel"
+  MessageModel :
+    type: "object"
+    required:
+      - "message_id"
+    properties:
+      message_id:
+        type: "integer"
+      messageDate:
+        type: "string"
+        example: "mercredi 30 septembre 2020 10:13"
+      messageFrom:
+        type: "string"
+        example: "Hemza LARIBI"
+      messageTitle:
+        type: "string"
+        example: "New Component request"
+      messageContent:
+        type: "string"
+        maxLength : 1500
+        example: "Merci de bien vouloir ajouter le Component suivant : Maven"
+      MessageStatus:
+        type: "array"
+        description: "Message status"
+        items:
+          $ref: "#/definitions/MessageStatus"
+    xml:
+      name: "MessageModel"

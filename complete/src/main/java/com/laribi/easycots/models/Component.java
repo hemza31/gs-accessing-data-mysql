@@ -18,11 +18,9 @@ public class Component {
 	private String componentEditor;
 
 	@ManyToOne
-	@JoinColumn(name="licence_name", nullable=false)
 	private Licence componentCurrentLicence;
 
-	@OneToMany
-	@JoinColumn(name="value", nullable=false)
+	@ManyToMany
 	private List<ComponentStatus> componentStatus;
 
 	// Get&Set
