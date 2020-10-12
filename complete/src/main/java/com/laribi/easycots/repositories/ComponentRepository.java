@@ -1,12 +1,12 @@
-package com.example.accessingdatamysql;
+package com.laribi.easycots.repositories;
 
 import org.springframework.data.repository.CrudRepository;
 
-import com.example.accessingdatamysql.User;
+import com.laribi.easycots.models.Component;
 
 // This will be AUTO IMPLEMENTED by Spring into a Bean called userRepository
 // CRUD refers Create, Read, Update, Delete
 
-public interface UserRepository extends CrudRepository<User, Integer> {
+public interface ComponentRepository extends CrudRepository<Component, Integer> {
 
 }
